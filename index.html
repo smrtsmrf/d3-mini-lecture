@@ -3,20 +3,102 @@
   <head>
     <meta charset="utf-8">
     <title>d3</title>
+    <link rel="stylesheet" href="style.css">
   </head>
   <body>
-    <!-- <input type="button" name="name" value="addData" id="addData">
-    <input type="button" name="name" value="removeData" id="removeData"> -->
+    <input type="button" name="name" value="addData" id="addData">
+    <input type="button" name="name" value="removeData" id="removeData">
 
     <script src="https://d3js.org/d3.v3.min.js" charset="utf-8"></script>
     <script src="data.js" charset="utf-8"></script>
     <script type="text/javascript">
-
-
-
-
-
-
+    //Width and height
+    var w = 700;
+    var h = 400;
+    var margin = 40;
+    var formatAs = d3.format(".1"); //when data is messy
+    var xScale = d3.scale.ordinal() //an ordinal scale instead of linear
+                  .domain(d3.range(dataset.length + 1))
+                  .rangeRoundBands([margin, w], 0.05); //discreet outputs are rounded to the nearest integer
+    var yScale = d3.scale.linear() //normalization:  For example, with 365 days in the year, day number 310 maps to about 0.85, or 85 percent of the way through the year.
+                  .domain([0, d3.max(dataset)]) //INPUT
+                  .range([h - margin, 0]); //OUTPUT
+// var scale = d3.scale.linear()
+//                     .domain([100, 500])
+//                     .range([10, 350]);
+// scale(100);  //Returns 10
+// scale(300);  //Returns 180
+// scale(500);  //Returns 350
+    //Define x-axis
+    var xAxis = d3.svg.axis()
+                  .scale(xScale) //which scale to operate
+                  .ticks(5) //how many lines on the axis
+                  .tickFormat(formatAs);
+    //Define Y axis
+    var yAxis = d3.svg.axis()
+                      .scale(yScale)
+                      .orient("left")
+                      .ticks(5)
+                      .tickFormat(formatAs);
+    //Create SVG element
+    var svg = d3.select("body")
+              .append("svg")
+              .attr("width", w)
+              .attr("height", h);
+function reset(){
+    svg.selectAll("rect")
+      .data(dataset)
+      .enter()
+      .append("rect")
+      .attr({
+          x: function(d, i) { return xScale(i); }, //bar width
+          y: function(d) { return h - yScale(d) - margin; }, //sets height and flips it
+          width: xScale.rangeBand(), //width in between bars
+          height: function(d) { return yScale(d) },
+          fill: function(d) { return "rgb(0, 0, " + (d * 10) + ")"; }
+     })
+     .on("mouseover", function(d) {
+         //Get this bar's x/y values, then augment for the tooltip
+       var xPosition = parseFloat(d3.select(this).attr("x")) + xScale.rangeBand() / 2;
+       var yPosition = parseFloat(d3.select(this).attr("y")) + 14;
+          d3.select(this)
+            .attr("fill", "orange");
+            //Create the tooltip label
+            svg.append("text")
+              .attr("id", "tooltip")
+              .attr("x", xPosition)
+              .attr("y", yPosition)
+              .attr("text-anchor", "middle")
+              .attr("font-family", "sans-serif")
+              .attr("font-size", "12px")
+              .attr("font-weight", "bold")
+              .attr("fill", "white")
+              .text(d3.max(dataset) - d);
+          })
+      .on("mouseout", function(d) {
+            d3.select(this)
+              .transition()
+              .duration(250)
+              .attr("fill", "rgb(0, 0, " + (d * 10) + ")");
+            //Remove the tooltip
+            d3.select("#tooltip").remove();
+    })
+      .on("click", function() {
+            sortBars();
+    })
+    // create x-axis
+    svg.append("g")
+        .attr('class', 'axis') //assigns 'x' and 'axis' class
+        .attr("transform", "translate(0," + (h - margin) + ")") //pushes line to bottom
+        .call(xAxis); //takes the incoming selection and hands it off to any function
+    //Create Y axis
+    svg.append("g")
+        .attr("class", "axis")
+        .attr("transform", "translate(" + margin + ",0)")
+        .call(yAxis);
+}
+reset()
     </script>
   </body>
 </html>
+Contact GitHub API Training Shop Blog About
